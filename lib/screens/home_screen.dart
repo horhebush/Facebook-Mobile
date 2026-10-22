@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../constants.dart';
-import '../screens/newsfeed_screen.dart';
-import '../screens/notification_screen.dart';
-import '../widgets/custom_font.dart';
-import '../screens/profile_screen.dart';
-import '../services/user_database.dart';
 
+import '../constants.dart';
+import '../models/user.dart';
+import '../services/user_service.dart';
+import '../widgets/custom_font.dart';
+import '../widgets/pawbook_loading.dart';
+import 'newsfeed_screen.dart';
+import 'notification_screen.dart';
+import 'profile_screen.dart';
+
+// Shell with the bottom bar; holds the three tabs and the signed-in user.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -17,138 +21,104 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
-  final UserDatabase _userDatabase = UserDatabase();
-  String _userDisplayName = 'Profile'; // Default fallback
-  bool _isLoadingUser = true;
+  User? _user;
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _loadUser();
   }
 
-  Future<void> _loadUserData() async {
-    try {
-      final username = await _userDatabase.getCurrentUser();
-      if (username != null) {
-        final user = await _userDatabase.findUserByUsername(username);
-        if (user != null) {
-          setState(() {
-            // Use username as display name, or first name + last name if available
-            final firstName = user['firstName']?.toString() ?? '';
-            final lastName = user['lastName']?.toString() ?? '';
-            if (firstName.isNotEmpty || lastName.isNotEmpty) {
-              _userDisplayName = '$firstName $lastName'.trim();
-            } else {
-              _userDisplayName = username;
-            }
-            _isLoadingUser = false;
-          });
-          return;
-        }
-      }
-      // If no user found, keep default
-      setState(() {
-        _isLoadingUser = false;
-      });
-    } catch (e) {
-      // On error, keep default
-      setState(() {
-        _isLoadingUser = false;
-      });
-    }
+  // Reads the user the splash screen confirmed is saved.
+  Future<void> _loadUser() async {
+    final user = await UserService().getUser();
+    if (mounted) setState(() => _user = user);
   }
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final user = _user;
+
+    if (user == null) {
+      return const Scaffold(body: Center(child: PawbookLoading()));
+    }
+
+    final titles = ['Pawbook', 'Notifications', user.fullName];
+
     return Scaffold(
-      backgroundColor: FB_TEXT_COLOR_WHITE,
       appBar: AppBar(
-        backgroundColor: FB_TEXT_COLOR_WHITE,
+        backgroundColor: scheme.surface,
         surfaceTintColor: Colors.transparent,
-        shadowColor: FB_PRIMARY.withOpacity(0.1),
+        shadowColor: FB_PRIMARY.withValues(alpha: 0.1),
         elevation: 1,
         title: Row(
           children: [
-            Icon(
-              Icons.pets,
-              color: FB_PRIMARY,
-              size: ScreenUtil().setSp(28),
-            ),
-            SizedBox(width: ScreenUtil().setWidth(8)),
-            CustomFont(
-              text: _selectedIndex == 0
-                  ? 'Pawbook'
-                  : _selectedIndex == 1
-                      ? 'Notifications'
-                      : (_isLoadingUser ? 'Profile' : _userDisplayName),
-              fontSize: ScreenUtil().setSp(24),
-              color: FB_DARK_PRIMARY,
-              fontFamily: 'Klavika',
-              fontWeight: FontWeight.bold,
+            Icon(Icons.pets, color: FB_PRIMARY, size: 28.sp),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: CustomFont(
+                text: titles[_selectedIndex],
+                fontSize: 24.sp,
+                color: brandColor(context),
+                fontFamily: 'Klavika',
+                fontWeight: FontWeight.bold,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
+        actions: [
+          // ENHANCEMENT 2: the settings screen.
+          IconButton(
+            icon: Icon(Icons.settings_outlined, color: brandColor(context)),
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
+          ),
+        ],
       ),
       body: PageView(
         controller: _pageController,
-        children: const <Widget>[
-          NewsfeedScreen(),
-          NotificationScreen(),
-          ProfileScreen(), 
+        onPageChanged: (page) => setState(() => _selectedIndex = page),
+        children: [
+          const NewsfeedScreen(),
+          NotificationScreen(user: user),
+          ProfileScreen(user: user),
         ],
-        onPageChanged: (page) {
-          setState(() {
-            _selectedIndex = page;
-          });
-        },
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: FB_TEXT_COLOR_WHITE,
-          boxShadow: [
-            BoxShadow(
-              color: FB_PRIMARY.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          backgroundColor: FB_TEXT_COLOR_WHITE,
-          showSelectedLabels: true,
-          showUnselectedLabels: true,
-          onTap: _onTappedBar,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Feed',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.notifications_outlined),
-              activeIcon: Icon(Icons.notifications),
-              label: 'Alerts',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.pets_outlined),
-              activeIcon: Icon(Icons.pets),
-              label: 'Profile',
-            ),
-          ],
-          selectedItemColor: FB_PRIMARY,
-          unselectedItemColor: FB_TEXT_COLOR_GREY,
-          currentIndex: _selectedIndex,
-          type: BottomNavigationBarType.fixed,
-        ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: scheme.surface,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        onTap: _onTappedBar,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Feed',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications_outlined),
+            activeIcon: Icon(Icons.notifications),
+            label: 'Alerts',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.pets_outlined),
+            activeIcon: Icon(Icons.pets),
+            label: 'Profile',
+          ),
+        ],
+        selectedItemColor: FB_PRIMARY,
+        unselectedItemColor: scheme.onSurfaceVariant,
+        currentIndex: _selectedIndex,
+        type: BottomNavigationBarType.fixed,
       ),
     );
   }
 
+  // Switches the page when a bottom bar item is tapped.
   void _onTappedBar(int value) {
-    setState(() {
-      _selectedIndex = value;
-    });
+    setState(() => _selectedIndex = value);
     _pageController.jumpToPage(value);
   }
 }

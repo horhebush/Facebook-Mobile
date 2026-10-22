@@ -5,10 +5,7 @@ import '../constants.dart';
 
 /// On-brand loading animation: pulsing paw with brand colors.
 class PawbookLoading extends StatefulWidget {
-  const PawbookLoading({
-    super.key,
-    this.size,
-  });
+  const PawbookLoading({super.key, this.size});
 
   final double? size;
 
@@ -28,9 +25,10 @@ class _PawbookLoadingState extends State<PawbookLoading>
       duration: const Duration(milliseconds: 800),
       vsync: this,
     )..repeat(reverse: true);
-    _scaleAnimation = Tween<double>(begin: 0.85, end: 1.15).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.85,
+      end: 1.15,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -45,27 +43,16 @@ class _PawbookLoadingState extends State<PawbookLoading>
     return AnimatedBuilder(
       animation: _scaleAnimation,
       builder: (context, child) {
-        return Transform.scale(
-          scale: _scaleAnimation.value,
-          child: child,
-        );
+        return Transform.scale(scale: _scaleAnimation.value, child: child);
       },
-      child: Icon(
-        Icons.pets,
-        size: size,
-        color: FB_PRIMARY,
-      ),
+      child: Icon(Icons.pets, size: size, color: FB_PRIMARY),
     );
   }
 }
 
 /// Alternative: three bouncing dots in brand colors (for tighter spaces).
 class PawbookLoadingDots extends StatefulWidget {
-  const PawbookLoadingDots({
-    super.key,
-    this.dotSize = 10,
-    this.color,
-  });
+  const PawbookLoadingDots({super.key, this.dotSize = 10, this.color});
 
   final double dotSize;
   final Color? color;
@@ -92,18 +79,20 @@ class _PawbookLoadingDotsState extends State<PawbookLoadingDots>
     _animations = _controllers
         .asMap()
         .entries
-        .map((e) => Tween<double>(begin: 0.4, end: 1.0).animate(
-              CurvedAnimation(
-                parent: e.value,
-                curve: Curves.easeInOut,
-              ),
-            ))
+        .map(
+          (e) => Tween<double>(
+            begin: 0.4,
+            end: 1.0,
+          ).animate(CurvedAnimation(parent: e.value, curve: Curves.easeInOut)),
+        )
         .toList();
   }
 
   @override
   void dispose() {
-    for (final c in _controllers) c.dispose();
+    for (final c in _controllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -127,8 +116,8 @@ class _PawbookLoadingDotsState extends State<PawbookLoadingDots>
                   color: i == 0
                       ? color
                       : i == 1
-                          ? FB_SECONARY
-                          : FB_DARK_PRIMARY,
+                      ? FB_SECONARY
+                      : FB_DARK_PRIMARY,
                   shape: BoxShape.circle,
                 ),
               ),

@@ -46,7 +46,7 @@ class CustomTextFormField extends StatelessWidget {
       keyboardType: keyboardType,
       inputFormatters: [LengthLimitingTextInputFormatter(maxLength)],
       style: TextStyle(
-        fontSize: fontSize, 
+        fontSize: fontSize,
         color: fontColor ?? FB_TEXT_COLOR_DARKGREY,
         fontFamily: 'Frutiger',
       ),

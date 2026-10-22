@@ -5,17 +5,20 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../constants.dart';
 import 'custom_font.dart';
 
-void customDialog(BuildContext context, {required String title, required String content}) {
+void customDialog(
+  BuildContext context, {
+  required String title,
+  required String content,
+}) {
   // Determine if it's an error or info dialog
-  final bool isError = title.toLowerCase().contains('invalid') || 
-                       title.toLowerCase().contains('error') ||
-                       title.toLowerCase().contains('failed') ||
-                       title.toLowerCase().contains('mismatch');
-  
+  final bool isError =
+      title.toLowerCase().contains('invalid') ||
+      title.toLowerCase().contains('error') ||
+      title.toLowerCase().contains('failed') ||
+      title.toLowerCase().contains('mismatch');
+
   AlertDialog alertDialog = AlertDialog(
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
-    ),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     backgroundColor: FB_TEXT_COLOR_WHITE,
     title: Row(
       children: [
@@ -39,10 +42,7 @@ void customDialog(BuildContext context, {required String title, required String 
     ),
     content: Text(
       content,
-      style: TextStyle(
-        color: FB_TEXT_COLOR_DARKGREY,
-        fontSize: 15,
-      ),
+      style: TextStyle(color: FB_TEXT_COLOR_DARKGREY, fontSize: 15),
     ),
     actions: <Widget>[
       ElevatedButton(
@@ -70,14 +70,14 @@ void customDialog(BuildContext context, {required String title, required String 
   );
 }
 
-void customOptionDialog(BuildContext context,
-    {required String title, required String content, required Function onYes}) {
+void customOptionDialog(
+  BuildContext context, {
+  required String title,
+  required String content,
+  required Function onYes,
+}) {
   AlertDialog alertDialog = AlertDialog(
-    title: CustomFont(
-      text: title,
-      fontSize: 30.sp,
-      color: FB_DARK_PRIMARY,
-    ),
+    title: CustomFont(text: title, fontSize: 30.sp, color: FB_DARK_PRIMARY),
     content: CustomFont(
       text: content,
       fontSize: 16.sp,
@@ -109,10 +109,7 @@ void customOptionDialog(BuildContext context,
       ),
     ],
   );
-  showDialog(
-    context: context,
-    builder: (BuildContext context) => alertDialog,
-  );
+  showDialog(context: context, builder: (BuildContext context) => alertDialog);
 }
 
 /// [imageUrl] can be a network URL (http/https) or an asset path (e.g. assets/images/...).
@@ -136,26 +133,22 @@ void customShowImageDialog(BuildContext context, {required String imageUrl}) {
                 ? CachedNetworkImage(
                     imageUrl: imageUrl,
                     fit: BoxFit.contain,
-                    progressIndicatorBuilder: (context, url, downloadProgress) =>
-                        CircularProgressIndicator(
-                      value: downloadProgress.progress,
-                      valueColor:
-                          const AlwaysStoppedAnimation<Color>(FB_DARK_PRIMARY),
-                    ),
-                    errorWidget: (context, url, error) => Icon(
-                      Icons.error,
-                      size: 100.sp,
-                      color: FB_ERROR,
-                    ),
+                    progressIndicatorBuilder:
+                        (context, url, downloadProgress) =>
+                            CircularProgressIndicator(
+                              value: downloadProgress.progress,
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                FB_DARK_PRIMARY,
+                              ),
+                            ),
+                    errorWidget: (context, url, error) =>
+                        Icon(Icons.error, size: 100.sp, color: FB_ERROR),
                   )
                 : Image.asset(
                     imageUrl,
                     fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => Icon(
-                      Icons.broken_image,
-                      size: 100.sp,
-                      color: FB_ERROR,
-                    ),
+                    errorBuilder: (context, error, stackTrace) =>
+                        Icon(Icons.broken_image, size: 100.sp, color: FB_ERROR),
                   ),
           ),
         ),
@@ -177,8 +170,5 @@ void customShowImageDialog(BuildContext context, {required String imageUrl}) {
       ],
     ),
   );
-  showDialog(
-    context: context,
-    builder: (BuildContext context) => alertDialog,
-  );
+  showDialog(context: context, builder: (BuildContext context) => alertDialog);
 }

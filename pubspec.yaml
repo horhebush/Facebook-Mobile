@@ -1,4 +1,4 @@
-name: activity_1
+name: fuertes_advmobprog_longexam1
 description: "A new Flutter project."
 publish_to: "none"
 version: 0.1.0
@@ -7,14 +7,15 @@ environment:
   sdk: ^3.10.1
 
 dependencies:
-  flutter:
-    sdk: flutter
-  #important!
-  flutter_screenutil: ^5.9.3
   cached_network_image: ^3.4.1
   carousel_slider: ^5.1.1
-  path_provider: ^2.1.1
-  path: ^1.8.3
+  flutter:
+    sdk: flutter
+  flutter_dotenv: ^6.0.1
+  flutter_screenutil: ^5.9.3
+  http: ^1.6.0
+  provider: ^6.1.5
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
@@ -32,6 +33,8 @@ flutter:
   assets:
     - assets/icons/
     - assets/images/
+    # Listed on its own because asset globbing skips dotfiles.
+    - assets/.env
   fonts:
     - family: Klavika
       fonts:

@@ -1,210 +1,174 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../constants.dart';
+import '../models/post.dart';
+import '../models/user.dart';
 import '../screens/detail_screen.dart';
+import '../services/post_service.dart';
 import 'custom_font.dart';
 
-class NewsFeedCard extends StatelessWidget {
-  final String userName;
-  final String postContent;
-  final String date;
-  final int numOfLikes;
-  final bool hasImage;
-  final String? avatarPath;
-  final String? imagePath;
-  final String? avatarUrl;
-  final String? imageUrl;
+// One post in the feed. The like is clickable; the rest opens the comments.
+class PostCard extends StatefulWidget {
+  final Post post;
+  final User? author;
 
-  const NewsFeedCard({
-    super.key,
-    required this.userName,
-    required this.postContent,
-    this.numOfLikes = 0,
-    this.hasImage = false,
-    required this.date,
-    this.avatarPath,
-    this.imagePath,
-    this.avatarUrl,
-    this.imageUrl,
-  });
+  const PostCard({super.key, required this.post, this.author});
 
-  ImageProvider<Object>? _avatarImage() {
-    if (avatarPath != null) {
-      return AssetImage(avatarPath!);
-    }
-    if (avatarUrl != null) {
-      return avatarUrl!.startsWith('http')
-          ? CachedNetworkImageProvider(avatarUrl!)
-          : AssetImage(avatarUrl!);
-    }
-    return null;
+  @override
+  State<PostCard> createState() => _PostCardState();
+}
+
+class _PostCardState extends State<PostCard> {
+  final PostService _postService = PostService();
+  late bool _liked = _postService.isLiked(widget.post.id);
+  late int _likes = _postService.likesOf(widget.post);
+
+  // ENHANCEMENT 3: flips the like on screen and hands it to the service.
+  void _toggleLike() {
+    setState(() {
+      _liked = !_liked;
+      _likes += _liked ? 1 : -1;
+    });
+    _postService.toggleLike(widget.post);
   }
 
-  String _getProfileImageUrl() {
-    if (avatarUrl != null) return avatarUrl!;
-    if (avatarPath != null) return avatarPath!;
-    return '';
-  }
-
-  String _getPostImageUrl() {
-    if (imageUrl != null) return imageUrl!;
-    if (imagePath != null) return imagePath!;
-    return '';
-  }
-
-  Widget _buildPostImage(double height) {
-    if (imageUrl != null) {
-      final url = imageUrl!;
-      if (url.startsWith('http')) {
-        return _loadingAwareNetworkImage(url, height: height);
-      }
-      return Image.asset(
-        url,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: height,
-      );
-    }
-    return Image.asset(
-      imagePath!,
-      fit: BoxFit.cover,
-      width: double.infinity,
-      height: height,
+  // Opens the post. The like can change there, so re-read it on the way back.
+  Future<void> _openDetail() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DetailScreen(post: widget.post, author: widget.author),
+      ),
     );
+    if (!mounted) return;
+    setState(() {
+      _liked = _postService.isLiked(widget.post.id);
+      _likes = _postService.likesOf(widget.post);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final avatarImage = _avatarImage();
+    final scheme = Theme.of(context).colorScheme;
+    final post = widget.post;
+    final author = widget.author;
+    final image = author?.image ?? '';
 
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DetailScreen(
-              userName: userName,
-              postContent: postContent,
-              date: date,
-              numOfLikes: numOfLikes,
-              imageUrl: _getPostImageUrl(),
-              profileImageURL: _getProfileImageUrl(),
-            ),
-          ),
-        );
-      },
-      child: Card(
-        margin: EdgeInsets.all(ScreenUtil().setSp(10)),
-        elevation: 2,
-        shadowColor: FB_PRIMARY.withOpacity(0.15),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(ScreenUtil().radius(12)),
-        ),
-        color: Colors.white,
+    return Card(
+      margin: EdgeInsets.all(10.r),
+      elevation: 2,
+      shadowColor: FB_PRIMARY.withValues(alpha: 0.15),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+      color: scheme.surfaceContainerLowest,
+      child: InkWell(
+        onTap: _openDetail,
+        borderRadius: BorderRadius.circular(12.r),
         child: Padding(
-          padding: EdgeInsets.all(ScreenUtil().setSp(12)),
+          padding: EdgeInsets.all(12.r),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  avatarImage != null
-                      ? CircleAvatar(
-                          radius: ScreenUtil().radius(16),
-                          backgroundImage: avatarImage,
-                        )
-                      : const Icon(Icons.person),
-                  SizedBox(width: ScreenUtil().setWidth(10)),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CustomFont(
-                        text: userName,
-                        fontSize: ScreenUtil().setSp(15),
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          CustomFont(
-                            text: date,
-                            fontSize: ScreenUtil().setSp(12),
-                            color: Colors.grey,
-                          ),
-                          SizedBox(width: ScreenUtil().setWidth(3)),
-                          const Icon(Icons.public, color: Colors.grey, size: 15),
-                        ],
-                      ),
-                    ],
+                  // Avatar from the users endpoint, or a placeholder.
+                  CircleAvatar(
+                    radius: 16.r,
+                    backgroundImage: image.isEmpty
+                        ? null
+                        : CachedNetworkImageProvider(image),
+                    child: image.isEmpty ? const Icon(Icons.person) : null,
                   ),
-                  const Spacer(),
-                  const Icon(Icons.more_horiz),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CustomFont(
+                          text: author?.fullName ?? 'User ${post.userId}',
+                          fontSize: 15.sp,
+                          color: scheme.onSurface,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        Row(
+                          children: [
+                            CustomFont(
+                              text: '@${author?.username ?? post.userId}',
+                              fontSize: 12.sp,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                            SizedBox(width: 3.w),
+                            Icon(
+                              Icons.public,
+                              color: scheme.onSurfaceVariant,
+                              size: 15,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.more_horiz, color: scheme.onSurfaceVariant),
                 ],
               ),
-
-              SizedBox(height: ScreenUtil().setHeight(5)),
-
-              // Post Content
+              SizedBox(height: 8.h),
               CustomFont(
-                text: postContent,
-                fontSize: ScreenUtil().setSp(12),
-                color: Colors.black,
+                text: post.title,
+                fontSize: 14.sp,
+                color: scheme.onSurface,
+                fontWeight: FontWeight.w600,
               ),
-
-              SizedBox(height: ScreenUtil().setHeight(5)),
-
-              if (hasImage && (imagePath != null || imageUrl != null))
-                Padding(
-                  padding: EdgeInsets.only(bottom: ScreenUtil().setHeight(5)),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(ScreenUtil().radius(8)),
-                    child: _buildPostImage(ScreenUtil().setHeight(200)),
-                  ),
-                )
-              else
-                SizedBox(height: ScreenUtil().setHeight(1)),
-
-              _InteractionRow(numOfLikes: numOfLikes),
-
+              SizedBox(height: 4.h),
+              CustomFont(
+                text: post.body,
+                fontSize: 12.sp,
+                color: scheme.onSurface,
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+              ),
+              SizedBox(height: 4.h),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  avatarImage != null
-                      ? CircleAvatar(
-                          radius: ScreenUtil().radius(12),
-                          backgroundImage: avatarImage,
-                        )
-                      : const Icon(Icons.person),
-                  SizedBox(width: ScreenUtil().setWidth(10)),
-                  Container(
-                    padding: EdgeInsets.fromLTRB(ScreenUtil().setSp(10), 0, 0, 0),
-                    alignment: Alignment.centerLeft,
-                    height: ScreenUtil().setHeight(25),
-                    width: ScreenUtil().setWidth(330),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(ScreenUtil().setSp(10)),
-                      ),
-                    ),
-                    child: CustomFont(
-                      text: 'Write a comment...',
-                      fontSize: ScreenUtil().setSp(11),
-                      color: Colors.grey,
-                    ),
+                  _action(
+                    icon: _liked ? Icons.pets : Icons.pets_outlined,
+                    label: '$_likes Woofs',
+                    color: _liked ? FB_PRIMARY : scheme.onSurfaceVariant,
+                    onPressed: _toggleLike,
+                  ),
+                  _action(
+                    icon: Icons.chat_bubble_outline,
+                    label: 'Bark',
+                    color: scheme.onSurfaceVariant,
+                    onPressed: _openDetail,
+                  ),
+                  _action(
+                    icon: Icons.share_outlined,
+                    label: 'Share',
+                    color: scheme.onSurfaceVariant,
+                    onPressed: () {},
                   ),
                 ],
               ),
-
-              SizedBox(height: ScreenUtil().setHeight(10)),
-              CustomFont(
-                text: 'View comments',
-                fontSize: ScreenUtil().setSp(12),
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+              InkWell(
+                onTap: _openDetail,
+                borderRadius: BorderRadius.circular(10.r),
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w),
+                  alignment: Alignment.centerLeft,
+                  height: 28.h,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: CustomFont(
+                    text: 'Write a comment...',
+                    fontSize: 11.sp,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
               ),
             ],
           ),
@@ -212,77 +176,22 @@ class NewsFeedCard extends StatelessWidget {
       ),
     );
   }
-}
 
-Widget _loadingAwareNetworkImage(String url, {required double height}) {
-  return CachedNetworkImage(
-    imageUrl: url,
-    fit: BoxFit.cover,
-    width: double.infinity,
-    height: height,
-    placeholder: (context, _) => SizedBox(
-      height: height,
-      child: const Center(child: CircularProgressIndicator()),
-    ),
-    errorWidget: (context, _, __) => SizedBox(
-      height: height,
-      child: const Center(child: Icon(Icons.broken_image)),
-    ),
-  );
-}
-
-class _InteractionRow extends StatelessWidget {
-  const _InteractionRow({required this.numOfLikes});
-
-  final int numOfLikes;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: ScreenUtil().setHeight(8)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          // Like button with paw
-          Row(
-            children: [
-              Icon(Icons.pets, color: FB_PRIMARY, size: 22),
-              SizedBox(width: ScreenUtil().setWidth(6)),
-              CustomFont(
-                text: '$numOfLikes Woofs',
-                fontSize: ScreenUtil().setSp(12),
-                color: FB_TEXT_COLOR_DARKGREY,
-                fontWeight: FontWeight.w500,
-              ),
-            ],
-          ),
-          // Comment button
-          Row(
-            children: [
-              Icon(Icons.chat_bubble_outline, color: FB_PRIMARY, size: 20),
-              SizedBox(width: ScreenUtil().setWidth(6)),
-              CustomFont(
-                text: 'Bark',
-                fontSize: ScreenUtil().setSp(12),
-                color: FB_TEXT_COLOR_DARKGREY,
-                fontWeight: FontWeight.w500,
-              ),
-            ],
-          ),
-          // Share button
-          Row(
-            children: [
-              Icon(Icons.share_outlined, color: FB_PRIMARY, size: 20),
-              SizedBox(width: ScreenUtil().setWidth(6)),
-              CustomFont(
-                text: 'Share',
-                fontSize: ScreenUtil().setSp(12),
-                color: FB_TEXT_COLOR_DARKGREY,
-                fontWeight: FontWeight.w500,
-              ),
-            ],
-          ),
-        ],
+  // Like, comment and share share one shape.
+  Widget _action({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return TextButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, color: color, size: 20),
+      label: CustomFont(
+        text: label,
+        fontSize: 12.sp,
+        color: color,
+        fontWeight: FontWeight.w500,
       ),
     );
   }

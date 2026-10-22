@@ -20,13 +20,13 @@ class PawbookLogo extends StatelessWidget {
     final double iconSize = size == PawbookLogoSize.large
         ? ScreenUtil().setSp(80)
         : size == PawbookLogoSize.medium
-            ? ScreenUtil().setSp(48)
-            : ScreenUtil().setSp(28);
+        ? ScreenUtil().setSp(48)
+        : ScreenUtil().setSp(28);
     final double fontSize = size == PawbookLogoSize.large
         ? ScreenUtil().setSp(40)
         : size == PawbookLogoSize.medium
-            ? ScreenUtil().setSp(24)
-            : ScreenUtil().setSp(16);
+        ? ScreenUtil().setSp(24)
+        : ScreenUtil().setSp(16);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -35,11 +35,7 @@ class PawbookLogo extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.pets,
-              size: iconSize,
-              color: FB_PRIMARY,
-            ),
+            Icon(Icons.pets, size: iconSize, color: FB_PRIMARY),
             SizedBox(width: ScreenUtil().setWidth(12)),
             Text(
               APP_NAME,
@@ -47,7 +43,7 @@ class PawbookLogo extends StatelessWidget {
                 fontFamily: 'Klavika',
                 fontSize: fontSize,
                 fontWeight: FontWeight.bold,
-                color: FB_DARK_PRIMARY,
+                color: brandColor(context),
                 letterSpacing: 1.2,
               ),
             ),

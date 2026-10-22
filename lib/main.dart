@@ -1,51 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '/screens/home_screen.dart';
-import '/screens/newsfeed_screen.dart';
-import '/screens/notification_screen.dart';
-import './screens/profile_screen.dart';
-import './screens/login_screen.dart';
-import './screens/register_screen.dart';
-import './screens/splash_screen.dart';
-import './services/user_database.dart';
+import 'package:provider/provider.dart';
 
-void main() => runApp(const FuertesFacebook());
+import 'providers/theme_provider.dart';
+import 'screens/home_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/signin_screen.dart';
+import 'screens/splash_screen.dart';
+import 'services/post_service.dart';
 
-class FuertesFacebook extends StatefulWidget {
-  const FuertesFacebook({super.key});
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: 'assets/.env');
 
-  @override
-  State<FuertesFacebook> createState() => _FuertesFacebookState();
+  final themeProvider = ThemeProvider();
+  await themeProvider.load();
+  await PostService().loadLikes();
+
+  runApp(
+    ChangeNotifierProvider.value(
+      value: themeProvider,
+      child: const FuertesFacebook(),
+    ),
+  );
 }
 
-class _FuertesFacebookState extends State<FuertesFacebook> {
-  final UserDatabase _userDatabase = UserDatabase();
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeDefaultAccount();
-  }
-
-  Future<void> _initializeDefaultAccount() async {
-    try {
-      // Check if default account exists
-      final existingUser = await _userDatabase.findUserByUsername('horhebush');
-      
-      if (existingUser == null) {
-        // Create default account if it doesn't exist
-        await _userDatabase.saveUser(
-          firstName: 'Demi',
-          lastName: '',
-          mobileNumber: '12345678901',
-          username: 'horhebush',
-          password: 'Pawdel00\$',
-        );
-      }
-    } catch (e) {
-      // Silently handle initialization errors - app can still run
-    }
-  }
+// Root widget: screen scaling, the theme, and the named routes.
+class FuertesFacebook extends StatelessWidget {
+  const FuertesFacebook({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -53,19 +36,20 @@ class _FuertesFacebookState extends State<FuertesFacebook> {
       designSize: const Size(412, 715),
       minTextAdapt: true,
       splitScreenMode: true,
-      builder: (_, child) {
+      builder: (context, child) {
+        final theme = context.watch<ThemeProvider>();
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          title: 'Facebook Replication',
+          title: 'Pawbook',
+          theme: theme.lightTheme,
+          darkTheme: theme.darkTheme,
+          themeMode: theme.isDark ? ThemeMode.dark : ThemeMode.light,
           initialRoute: '/splash',
           routes: {
             '/splash': (context) => const SplashScreen(),
-            '/login': (context) => const LoginScreen(),
-            '/register': (context) => const RegisterScreen(),
-            '/newsfeed': (context) => const NewsfeedScreen(),
+            '/signin': (context) => const SignInScreen(),
             '/home': (context) => const HomeScreen(),
-            '/notification': (context) => NotificationScreen(),
-            '/profile': (context) => const ProfileScreen(),
+            '/settings': (context) => const SettingsScreen(),
           },
         );
       },

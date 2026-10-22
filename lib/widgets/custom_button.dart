@@ -60,10 +60,11 @@ class _CustomButtonState extends State<CustomButton> {
         child: CustomFont(
           text: widget.buttonName,
           fontSize: ScreenUtil().setSp(12),
-          color: widget.fontColor),
+          color: widget.fontColor,
+        ),
       );
     } else {
-       return ElevatedButton (
+      return ElevatedButton(
         onPressed: widget.onPressed,
         style: ElevatedButton.styleFrom(
           padding: EdgeInsets.symmetric(
@@ -80,6 +81,6 @@ class _CustomButtonState extends State<CustomButton> {
           color: widget.fontColor,
         ),
       );
-    } 
+    }
   }
 }

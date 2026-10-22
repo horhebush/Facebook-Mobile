@@ -45,13 +45,13 @@ class CustomInkwellButton extends StatelessWidget {
                     end: Alignment.centerRight,
                   )
                 : null,
-            color: !useGradient || backgroundColor != null 
-                ? (backgroundColor ?? FB_PRIMARY) 
+            color: !useGradient || backgroundColor != null
+                ? (backgroundColor ?? FB_PRIMARY)
                 : null,
             borderRadius: BorderRadius.circular(borderRadius),
             boxShadow: [
               BoxShadow(
-                color: FB_PRIMARY.withOpacity(0.3),
+                color: FB_PRIMARY.withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -69,39 +69,6 @@ class CustomInkwellButton extends StatelessWidget {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// Keep the original CommentButton for backwards compatibility
-class CommentButton extends StatelessWidget {
-  final VoidCallback onPressed;
-  final double iconSize;
-  final Color textColor;
-
-  const CommentButton({
-    super.key,
-    required this.onPressed,
-    this.iconSize = 20,
-    required this.textColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton.icon(
-      onPressed: onPressed,
-      icon: Image.asset(
-        'assets/icons/comment.png',
-        width: iconSize,
-        height: iconSize,
-      ),
-      label: Text(
-        'Comment',
-        style: TextStyle(
-          color: textColor,
-          fontSize: 12,
         ),
       ),
     );
